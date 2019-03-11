@@ -14,110 +14,63 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 public class MainActivity extends ListActivity {
 	private BookManager mBookManager;
 	private MyServiceConnection mServiceConnection;
 	
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		String[] array = {"绑定服务",
-				"解绑服务",
-				"getBooks",
-				"addBookIn",
-				"addBookOut",
-				"addBookInout",
-				"",};
-		setListAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<String>(Arrays.asList(array))));
+		String[] array = {
+			"addBookIn",
+			"addBookOut",
+			"addBookInout"};
+		setListAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, array));
+		
 		mServiceConnection = new MyServiceConnection();
+		Intent intent = new Intent();
+		intent.setAction("com.bqt.service.aidl");
+		intent.setPackage("com.bqt.aidl2");
+		bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		if (mServiceConnection != null) {
+			unbindService(mServiceConnection);
+		}
+		mBookManager = null;
 	}
 	
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
-		switch (position) {
-			case 0:
-				Intent intent = new Intent();
-				intent.setAction("com.bqt.service.aidl");
-				intent.setPackage("com.bqt.aidl2");
-				bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
-				break;
-			case 1:
-				if (mServiceConnection != null) unbindService(mServiceConnection);
-				else Toast.makeText(this, "还没绑定服务", Toast.LENGTH_SHORT).show();
-				mBookManager = null;
-				break;
-			case 2:
-				getBooks();
-				break;
-			case 3:
-				addBookIn();
-				break;
-			case 4:
-				addBookOut();
-				break;
-			case 5:
-				addBookInout();
-				break;
+		if (mBookManager != null) {
+			try {
+				Book book = null, returnBook = null;
+				switch (position) {
+					case 0:
+						book = new Book("客户端-In", 10);
+						Log.i("bqt", "【客户端-传进去的Book-执行前】" + book);
+						returnBook = mBookManager.addBookIn(book);
+						break;
+					case 1:
+						book = new Book("客户端-Out", 20);
+						Log.i("bqt", "【客户端-传进去的Book-执行前】" + book);
+						returnBook = mBookManager.addBookOut(book);
+						break;
+					case 2:
+						book = new Book("客户端-Inout", 30);
+						Log.i("bqt", "【客户端-传进去的Book-执行前】" + book);
+						returnBook = mBookManager.addBookInout(book);
+						break;
+				}
+				
+				Log.i("bqt", "【客户端-returnBook】" + returnBook);
+				Log.i("bqt", "【客户端-传进去的Book-执行后】" + book);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
 		}
-	}
-	
-	private void getBooks() {
-		if (mBookManager != null) {
-			try {
-				Log.i("bqt", "【客户端getBooks】" + mBookManager.getBooks().toString());
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
-		} else Toast.makeText(this, "还没绑定服务", Toast.LENGTH_SHORT).show();
-		
-	}
-	
-	public void addBookIn() {
-		if (mBookManager != null) {
-			Book book = new Book();
-			book.setName("包青天In");
-			book.setPrice(10);
-			try {
-				//获得服务端执行方法的返回值，并打印输出
-				Book returnBook = mBookManager.addBookIn(book);
-				Log.i("bqt", "【客户端addBookIn】" + returnBook.toString());
-				Log.i("bqt", "【客户端addBookIn：传进去的参数】" + book.toString());
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
-		} else Toast.makeText(this, "还没绑定服务", Toast.LENGTH_SHORT).show();
-	}
-	
-	public void addBookOut() {
-		if (mBookManager != null) {
-			Book book = new Book();
-			book.setName("包青天Out");
-			book.setPrice(20);
-			try {
-				Book returnBook = mBookManager.addBookOut(book);
-				Log.i("bqt", "【客户端addBookOut】" + returnBook.toString());
-				Log.i("bqt", "【客户端addBookOut：传进去的参数】" + book.toString());
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
-		} else Toast.makeText(this, "还没绑定服务", Toast.LENGTH_SHORT).show();
-	}
-	
-	public void addBookInout() {
-		if (mBookManager != null) {
-			Book book = new Book();
-			book.setName("包青天Inout");
-			book.setPrice(30);
-			try {
-				Book returnBook = mBookManager.addBookInout(book);
-				Log.i("bqt", "【客户端addBookInout】" + returnBook.toString());
-				Log.i("bqt", "【客户端addBookInout：传进去的参数】" + book.toString());
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
-		} else Toast.makeText(this, "还没绑定服务", Toast.LENGTH_SHORT).show();
 	}
 	
 	private class MyServiceConnection implements ServiceConnection {
