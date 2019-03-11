@@ -86,4 +86,5 @@ public class MainActivity extends ListActivity {
 			mBookManager = null;
 		}
 	}
+	
 }
