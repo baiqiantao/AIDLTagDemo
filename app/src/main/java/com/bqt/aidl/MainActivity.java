@@ -23,7 +23,8 @@ public class MainActivity extends ListActivity {
 		String[] array = {
 			"addBookIn",
 			"addBookOut",
-			"addBookInout"};
+			"addBookInout",
+			"后台服务 AlarmManager"};
 		setListAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, array));
 		
 		mServiceConnection = new MyServiceConnection();
@@ -63,6 +64,9 @@ public class MainActivity extends ListActivity {
 						Log.i("bqt", "【客户端-传进去的Book-执行前】" + book);
 						returnBook = mBookManager.addBookInout(book);
 						break;
+					case 3:
+						startActivity(new Intent(this, AlarmManagerActivity.class));
+						return;
 				}
 				
 				Log.i("bqt", "【客户端-returnBook】" + returnBook);
